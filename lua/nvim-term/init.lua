@@ -1,17 +1,14 @@
 local M = {}
 
-
 -- Default configuration
 local default_config = {
     height = 15,                            -- Terminal window height (only for horizontal windows)
     width = math.floor(vim.o.columns / 2),  -- Terminal window width (only for vertical windows)
-    shell = nil,                            -- Default shell (nil = vim.o.shell)
+    shell_path = nil,                       -- Default shell (nil = vim.o.shell)
     position = "bottom",                    -- "bottom", "top", "left", "right"
-    startinsert = true,                     -- Start in insert mode when opening
+    startinsert = false,                     -- Start in insert mode when opening
     auto_open = true,                       -- Auto-open window when creating new terminal
-    profiles = {
-
-    },
+    profiles = {},
 }
 
 -- Module configuration
@@ -70,8 +67,8 @@ end
 function M.setup(user_config)
     M.config = vim.tbl_deep_extend("force", default_config, user_config or {})
 
-    if not shell_is_valid(M.config.shell) then
-        vim.notify("NvimTerm: Shell not found or not executable: \"" .. M.config.shell .. "\", defaulting to vim.o.shell", vim.log.levels.WARN)
+    if not shell_is_valid(M.config.shell_path) then
+        vim.notify("NvimTerm: Shell not found or not executable: \"" .. M.config.shell_path .. "\", defaulting to vim.o.shell", vim.log.levels.WARN)
     end
 
     if not position_is_valid(M.config.position) then
@@ -267,7 +264,12 @@ local function open_window()
     vim.api.nvim_win_set_buf(M._state.window, term.buf)
     vim.api.nvim_buf_set_option(term.buf, "number", false)
     vim.api.nvim_buf_set_option(term.buf, "relativenumber", false)
-    vim.cmd("wincmd p")
+
+    if M.config.startinsert then
+        vim.cmd("startinsert")
+    else
+        vim.cmd("wincmd p")
+    end
 
     M._state.visible = true
     draw_tab_bar()
@@ -357,7 +359,7 @@ function M.new(shell_or_profile)
         args = profile.args
         display_name = profile.name or shell_or_profile
     else
-        shell_path = shell_or_profile or M.config.shell or vim.o.shell
+        shell_path = shell_or_profile or M.config.shell_path or vim.o.shell
         args = nil
         display_name = nil
     end
@@ -373,13 +375,18 @@ function M.new(shell_or_profile)
     M._state.current_idx = #M._state.terminals -- Switch to new terminal
 
     -- If window not visible, open window to show new terminal
-    if not M._state.visible then
+    if M.config.auto_open and not M._state.visible then
         open_window()
     elseif M._state.window and vim.api.nvim_win_is_valid(M._state.window) then
         -- If window visible, switch display to the new terminal
         vim.api.nvim_win_set_buf(M._state.window, term.buf)
         vim.api.nvim_win_set_option(M._state.window, "number", false)
         vim.api.nvim_win_set_option(M._state.window, "relativenumber", false)
+
+        if M.config.startinsert then
+            vim.cmd("startinsert")
+        end
+
         draw_tab_bar()
     end
 
