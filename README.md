@@ -22,7 +22,7 @@ providing a persistent, multi-terminal interface with tab-like management and co
 ### With Lazy.nvim
 ```lua
 require('lazy').setup({
-    'your-username/nvim-term',
+    'ywbrian/nvim-term',
     config = function()
         require('nvim-term').setup()
     end
@@ -33,7 +33,7 @@ require('lazy').setup({
 ```lua
 return require('packer').startup(function(use)
     use {
-        'your-username/nvim-term',
+        'ywbrian/nvim-term',
         config = function()
             require('nvim-term').setup()
         end
